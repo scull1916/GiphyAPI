@@ -3,25 +3,45 @@ $(document).ready(function()
 
 	var topics = 
 	[
+	
 	"black books",
 	"doctor who",
 	"dougal",
 	"father ted",
 	"flight of the conchords",
 	"it crowd",
-	"phineas and ferb",
+	"portlandia",
 	"simpsons"
 	
 	];
-	var userPick = "I got picked!";
+
 	var addShow = "";
 	var authKey = "mh76jvx6Z44dt7dBKWa8ZHWfoSw5Xitm";
 	var addTag = "";
-	var numResults = 0;
+	
 
-	var queryURLBase = "https://api.giphy.com/v1/gifs/random?rating=PG&api_key=" + authKey;
-	console.log(queryURLBase);
+	// console.log(queryURL);
 	console.log(authKey);
+
+//Receive input from the user and use the input to dynamically add a button to the other buttons
+
+	$("#submitBtn").on("click", function(event)
+	{
+		event.preventDefault();
+
+		addShow = $("#userAdd").val().trim();
+		console.log("addShow: " + addShow);
+
+		$("<button>").appendTo(".button").text(addShow).addClass("btn btn-outline-primary").attr("value", addShow);
+		
+
+		topics.push(addShow);
+		console.log(topics);
+
+
+
+	});
+
 
 
 //Dynamically add buttons with content from the topics array
@@ -33,48 +53,80 @@ for (i=0; i<topics.length; i++)
 
 }
 
-//Receive input from the user and use the input to dynamically add a button to the other buttons
-$("#submitBtn").on("click", function(event)
-{
-	event.preventDefault();
-
-	addShow = $("#userAdd").val().trim();
 
 
 
-	$("<button>").appendTo(".button").text(addShow).addClass("btn btn-outline-primary").attr("value", addShow);
-	topics.push(addShow);
-	
-
-
-});
-
-function runQuery(queryURL)
+//Click on a button
+$(".btn").on("click", function()
 {
 
-	//AJAX function
-	$.ajax({url: queryURL, method:"GET"})
-	.done(function(GiphyData)
+	//Empty previous selection's content
+	$("#images").empty();
+
+	console.log(topics);
+
+	//Grab value from button, assign it to the tag variable
+	addTag = $(this).val();
+	console.log(addTag);
+
+	//concatenate to the url to pull in Giphy content related to the button click
+	var queryURL = "https://api.giphy.com/v1/gifs/search?limit=10&api_key=" + authKey + "&q=" + addTag;
+	// queryURL = queryURL + "&q=" + addTag;
+	console.log(queryURL);
+
+	//Running the AJAX GET request
+	$.ajax(
 	{
-
-		console.log("We've got data: ", GiphyData);
-		console.log(GiphyData.type);
-		console.log(GiphyData.url);
+		url: queryURL,
+		method: "GET"
 	})
 
+	//When the date comes back
+	.then(function(response)
+	{
+
+		var results = response.data;
+		console.log(results);
+
+		//Loop through the results
+		for (var i=0; i<results.length; i++)
+		{
+			if (results[i].rating !== "r" && results[i].rating !== "pg-13")
+			{
+				//create a div to place the retrieved content
+				var giphyDiv = $("<div class='image'>");
+
+				//capture the retrieved content's rating
+				var rating = results[i].rating;
 
 
-}
+				//create a place to post the content's rating
+				var p = $("<p>").text("Rating: " + rating);
 
-$(".btn-outline-primary").on("click", function(event)
-{
+				//create a place to post the giphy
+				var retrGif = $("<img>");
 
-	userPick = $("btn-outline-primary").val();
-	console.log(userPick);
+				//give the giphy space a source attr which is a property of the content pulled
+				retrGif.attr("src", results[i].images.fixed_height.url);
 
-	//Grab value from button, assign it to the tag variable, concatenate to the url to pull in
-	//Giphy content related to the button
+				//append rating and content to the giphyDiv
+				giphyDiv.append(p);
+				giphyDiv.append(retrGif);
+
+				//Prepend content to the space provided
+				$("#images").prepend(giphyDiv);
+
+
+			}
+		}
+
+	})
+
 })
+
+
+
+
 
 
 });
